@@ -42,7 +42,7 @@ handler :: proc(handler: ^http.Handler, req: ^http.Request, res: ^http.Response)
 			session.user_id = user_id_ok ? user_id : nil
 			// log.info("Session had user:", session.user_id)
 		} else {
-			log.info("Could not retrieve session")
+			log.info("Could not retrieve session", get_ok, len(values))
 			ok = false
 		}
 	}

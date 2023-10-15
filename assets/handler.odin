@@ -63,7 +63,6 @@ handler :: proc(req: ^http.Request, r: ^http.Response) {
 	asset, ok := root.by_url[req_clean]
 	if !ok {
 		suffix := strings.trim_prefix(req_clean, base_clean)
-		log.info("Suffix", suffix)
 		index_dash := strings.last_index(suffix, "-")
 		index_dot := strings.last_index(suffix, ".")
 		if index_dash < 0 || index_dot < index_dash {

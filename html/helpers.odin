@@ -134,31 +134,35 @@ attrs_with_map :: proc(attrs: map[string]Value) -> string {
 	return strings.to_string(builder)
 }
 
-attrs :: proc(attrs: []KeyValue) -> string {
+attrs :: proc(attrs: []KeyValue, prefix: string = "") -> string {
 	builder := strings.builder_make(context.temp_allocator)
 
 	for kv in attrs {
 		switch val in kv.val {
 			case string:
 				if len(val) > 0 {
+					strings.write_string(&builder, prefix)
 					strings.write_string(&builder, kv.key)
 					strings.write_string(&builder, "=\"")
 					strings.write_string(&builder, val)
 					strings.write_string(&builder, "\" ")
 				}
 			case int:
+				strings.write_string(&builder, prefix)
 				strings.write_string(&builder, kv.key)
 				strings.write_string(&builder, "=\"")
 				strings.write_int(&builder, val)
 				strings.write_string(&builder, "\" ")
 			case bool:
 				if val {
+					strings.write_string(&builder, prefix)
 					strings.write_string(&builder, kv.key)
 					strings.write_string(&builder, "=\"")
 					strings.write_string(&builder, kv.key)
 					strings.write_string(&builder, "\" ")
 				}
 			case time.Time:
+				strings.write_string(&builder, prefix)
 				strings.write_string(&builder, kv.key)
 				strings.write_string(&builder, "=\"")
 				write_iso_date_time_to_the_minute(&builder, val)
