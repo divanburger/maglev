@@ -35,7 +35,7 @@ _parse_int :: proc(s: string, offset: int) -> (result: int, new_offset: int, ok:
 	return
 }
 
-exec_result :: proc(conn: ^postgres.Conn, query: string, params: ..string) -> ^postgres.Result {
+exec_result :: proc(query: string, params: ..string) -> ^postgres.Result {
 	length := len(params)
 	cparams := make([]cstring, length, context.temp_allocator)
 	for param, index in params {
@@ -102,36 +102,62 @@ parse_rows :: proc(result: ^postgres.Result) -> (res: []map[string]ResultValue, 
 	return m, true
 }
 
-exec_cmd :: proc(conn: ^postgres.Conn, query: string, params: ..string) -> (success: bool) {
-	result := exec_result(conn, query, ..params)
+exec_cmd :: proc(query: string, params: ..string, location := #caller_location) -> (success: bool) {
+	result := exec_result(query, ..params)
+	defer postgres.clear(result)
 	status := postgres.resultStatus(result)
 	if status != .Command_OK {
-		log.error("Error executing postgres command:", postgres.resStatus(status), postgres.resultErrorMessage(result))
-		log.error(query)
-		postgres.clear(result)
+		log.error("Error executing postgres command:", postgres.resStatus(status), postgres.resultErrorMessage(result), location=location)
+		log.error(query, location=location)
 		return false
 	}
-	postgres.clear(result)
 	return true
 }
 
-exec_query :: proc(conn: ^postgres.Conn, query: string, params: ..string) -> (res: []map[string]string, success: bool) {
-	result := exec_result(conn, query, ..params)
+exec_exist :: proc(query: string, params: ..string, location := #caller_location) -> (exist: bool, success: bool) {
+	result := exec_result(query, ..params)
+	defer postgres.clear(result)
+	status := postgres.resultStatus(result)
+	if status != .Tuples_OK {
+		log.error("Error executing postgres command:", postgres.resStatus(status), postgres.resultErrorMessage(result), location=location)
+		log.error(query, location=location)
+		return false, false
+	}
+	return postgres.ntuples(result) > 0, true
+}
+
+exec_row_count :: proc(query: string, params: ..string, location := #caller_location) -> (rows: int, success: bool) {
+	result := exec_result(query, ..params)
+	defer postgres.clear(result)
+	status := postgres.resultStatus(result)
+	if status != .Tuples_OK {
+		log.error("Error executing postgres command:", postgres.resStatus(status), postgres.resultErrorMessage(result), location=location)
+		log.error(query, location=location)
+		return 0, false
+	}
+	return int(postgres.ntuples(result)), true
+}
+
+exec_query_as_str :: proc(query: string, params: ..string, location := #caller_location) -> (res: []map[string]string, success: bool) {
+	result := exec_result(query, ..params)
+	defer postgres.clear(result)
 	status := postgres.resultStatus(result)
 	if status != .Tuples_OK {
 		log.error("Error executing postgres query:", postgres.resStatus(status), postgres.resultErrorMessage(result))
-		log.error(query)
+		log.error(query, location=location)
 		postgres.clear(result)
 		return nil, false
 	}
 	return parse_rows_as_string(result)
 }
 
-exec_query_as_any :: proc(conn: ^postgres.Conn, query: string, params: ..string) -> (res: []map[string]ResultValue, success: bool) {
-	result := exec_result(conn, query, ..params)
+exec_query :: proc(query: string, params: ..string, location := #caller_location) -> (res: []map[string]ResultValue, success: bool) {
+	result := exec_result(query, ..params)
+	defer postgres.clear(result)
 	status := postgres.resultStatus(result)
 	if status != .Tuples_OK {
-		log.error("Error executing postgres query:", postgres.resStatus(status), postgres.resultErrorMessage(result))
+		log.error("Error executing postgres query:", postgres.resStatus(status), postgres.resultErrorMessage(result), location=location)
+		log.error(query, location=location)
 		postgres.clear(result)
 		return nil, false
 	}

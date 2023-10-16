@@ -26,7 +26,7 @@ generate_key :: proc() -> string {
 }
 
 save :: proc() {
-	db.exec_cmd(db.conn, "UPDATE sessions SET user_id = $2, last_accessed_at = NOW() WHERE key = $1", session.key, fmt.tprint(session.user_id))
+	db.exec_cmd("UPDATE sessions SET user_id = $2, last_accessed_at = NOW() WHERE key = $1", session.key, fmt.tprint(session.user_id))
 }
 
 handler :: proc(handler: ^http.Handler, req: ^http.Request, res: ^http.Response) {
@@ -35,9 +35,9 @@ handler :: proc(handler: ^http.Handler, req: ^http.Request, res: ^http.Response)
 	session_key, ok := http.request_cookie_get(req, "session_key")
 	if ok {
 		// log.info("Request had key:", session_key)
-		values, get_ok := db.exec_query_as_any(db.conn, "SELECT key, user_id FROM sessions WHERE key = $1", session_key)
+		values, get_ok := db.exec_query("SELECT key, user_id FROM sessions WHERE key = $1", session_key)
 		if get_ok && len(values) == 1 {
-			upd_ok := db.exec_cmd(db.conn, "UPDATE sessions SET last_accessed_at = NOW() WHERE key = $1", session_key)
+			upd_ok := db.exec_cmd("UPDATE sessions SET last_accessed_at = NOW() WHERE key = $1", session_key)
 			user_id, user_id_ok := values[0]["user_id"].(int)
 			session.user_id = user_id_ok ? user_id : nil
 			// log.info("Session had user:", session.user_id)
@@ -61,7 +61,7 @@ handler :: proc(handler: ^http.Handler, req: ^http.Request, res: ^http.Response)
 			secure       = false,
 		})
 
-		ok := db.exec_cmd(db.conn, "INSERT INTO sessions (key, created_at, last_accessed_at) VALUES ($1, NOW(), NOW()) ON CONFLICT DO NOTHING", session_key)
+		ok := db.exec_cmd("INSERT INTO sessions (key, created_at, last_accessed_at) VALUES ($1, NOW(), NOW()) ON CONFLICT DO NOTHING", session_key)
 		if !ok {
 			log.error("Could not create session")
 			http.respond(res, http.Status.Internal_Server_Error)
