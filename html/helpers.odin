@@ -4,37 +4,11 @@ import "core:strings"
 import "core:fmt"
 import "core:time"
 
-Value :: union {
-	string,
-	int,
-	bool,
-	time.Time,
-}
+import "../base"
 
 KeyValue :: struct {
 	key: string,
-	val: Value,
-}
-
-value_from_string :: #force_inline proc(val: Maybe(string)) -> Value {
-	v, ok := val.?
-	return ok ? v : nil
-}
-
-value_from_int :: #force_inline proc(val: Maybe(int)) -> Value {
-	v, ok := val.?
-	return ok ? v : nil
-}
-
-value_from_time :: #force_inline proc(val: Maybe(time.Time)) -> Value {
-	v, ok := val.?
-	return ok ? v : nil
-}
-
-value_from :: proc{
-	value_from_string,
-	value_from_int,
-	value_from_time,
+	val: base.Value,
 }
 
 write_padded_number :: proc(builder: ^strings.Builder, i: i64, width: int) {
@@ -84,12 +58,16 @@ write_iso_date_time :: proc(builder: ^strings.Builder, t: time.Time) {
 	strings.write_string(builder, "Z")
 }
 
-write_value :: proc(builder: ^strings.Builder, value: Value) {
+write_value :: proc(builder: ^strings.Builder, value: base.Value) {
 	switch val in value {
 		case string:
 			strings.write_string(builder, val)
+		case base.Safe_Html:
+			strings.write_string(builder, val.text)
 		case int:
 			strings.write_int(builder, val)
+		case f64:
+			strings.write_f64(builder, val, 'f')
 		case bool:
 			strings.write_byte(builder, val ? '1' : '0')
 		case time.Time:
@@ -98,7 +76,7 @@ write_value :: proc(builder: ^strings.Builder, value: Value) {
 	}
 }
 
-attrs_with_map :: proc(attrs: map[string]Value) -> string {
+attrs_with_map :: proc(attrs: map[string]base.Value) -> string {
 	builder := strings.builder_make(context.temp_allocator)
 
 	for key, value in attrs {
@@ -110,10 +88,22 @@ attrs_with_map :: proc(attrs: map[string]Value) -> string {
 					strings.write_string(&builder, val)
 					strings.write_string(&builder, "\" ")
 				}
+			case base.Safe_Html:
+				if len(val.text) > 0 {
+					strings.write_string(&builder, key)
+					strings.write_string(&builder, "=\"")
+					strings.write_string(&builder, val.text)
+					strings.write_string(&builder, "\" ")
+				}
 			case int:
 				strings.write_string(&builder, key)
 				strings.write_string(&builder, "=\"")
 				strings.write_int(&builder, val)
+				strings.write_string(&builder, "\" ")
+			case f64:
+				strings.write_string(&builder, key)
+				strings.write_string(&builder, "=\"")
+				strings.write_f64(&builder, val, 'f')
 				strings.write_string(&builder, "\" ")
 			case bool:
 				if val {
@@ -147,11 +137,25 @@ attrs :: proc(attrs: []KeyValue, prefix: string = "") -> string {
 					strings.write_string(&builder, val)
 					strings.write_string(&builder, "\" ")
 				}
+			case base.Safe_Html:
+				if len(val.text) > 0 {
+					strings.write_string(&builder, prefix)
+					strings.write_string(&builder, kv.key)
+					strings.write_string(&builder, "=\"")
+					strings.write_string(&builder, val.text)
+					strings.write_string(&builder, "\" ")
+				}
 			case int:
 				strings.write_string(&builder, prefix)
 				strings.write_string(&builder, kv.key)
 				strings.write_string(&builder, "=\"")
 				strings.write_int(&builder, val)
+				strings.write_string(&builder, "\" ")
+			case f64:
+				strings.write_string(&builder, prefix)
+				strings.write_string(&builder, kv.key)
+				strings.write_string(&builder, "=\"")
+				strings.write_f64(&builder, val, 'f')
 				strings.write_string(&builder, "\" ")
 			case bool:
 				if val {

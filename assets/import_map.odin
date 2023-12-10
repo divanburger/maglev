@@ -10,7 +10,11 @@ import "core:encoding/json"
 js_module_for_name :: proc(name: string) -> (module: string, ok: bool) {
 	path := filepath.join([]string{"node_modules", name})
 	package_file_path := filepath.join([]string{path, "package.json"})
-	data := os.read_entire_file(package_file_path) or_return
+	data, open_ok := os.read_entire_file(package_file_path)
+	if !open_ok {
+		log.error("Could not open file:", package_file_path)
+		return "", false
+	}
 
 	json_data, err := json.parse(data)
 	if err != .None {
@@ -20,8 +24,8 @@ js_module_for_name :: proc(name: string) -> (module: string, ok: bool) {
 
 	base := json_data.(json.Object) or_return
 
-	module_val, module_ok := base["module"]
-	if module_ok do module, _ = base["module"].(string)
+	module_val := base["module"] or_return
+	module = module_val.(string) or_return
 
 	return module, true
 }

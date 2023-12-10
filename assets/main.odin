@@ -23,10 +23,10 @@ AssetRoot :: struct {
 	by_url: map[string]^Asset,
 }
 
-cdn_allow_origin: Maybe(string)
+cdn_allow_origin: []string
 cdn_url_base: Maybe(string)
-roots_by_name: map[string]^AssetRoot;
-roots: [dynamic]^AssetRoot;
+roots_by_name: map[string]^AssetRoot
+roots: [dynamic]^AssetRoot
 
 add_root :: proc(name: string, file_prefix: string, url_prefix: string) {
 	root := new_clone(AssetRoot{name = name, file_prefix = file_prefix, url_prefix = url_prefix})
@@ -74,7 +74,7 @@ lookup_by_root :: proc(root: ^AssetRoot, name: string) -> (asset: ^Asset, ok: bo
 
 lookup :: proc{
 	lookup_by_name,
-	lookup_by_root
+	lookup_by_root,
 }
 
 url :: proc(root, name: string) -> string {

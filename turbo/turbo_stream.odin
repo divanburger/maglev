@@ -35,14 +35,14 @@ add_stream_append :: proc(stream: ^TurboStream, target: string, content: string)
 
 respond_with_stream_obj :: proc (r: ^http.Response, stream: TurboStream, loc := #caller_location) {
 	r.status = .OK
-	r.headers["content-type"] = "text/vnd.turbo-stream.html"
+	http.headers_set(&r.headers, "content-type", "text/vnd.turbo-stream.html")
 	http.body_set(r, strings.concatenate(stream[:]), loc)
 	http.respond(r, loc)
 }
 
 respond_with_stream_html :: proc (r: ^http.Response, html: string, loc := #caller_location) {
 	r.status = .OK
-	r.headers["content-type"] = "text/vnd.turbo-stream.html"
+	http.headers_set(&r.headers, "content-type", "text/vnd.turbo-stream.html")
 	http.body_set(r, html, loc)
 	http.respond(r, loc)
 }

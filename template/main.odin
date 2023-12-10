@@ -32,20 +32,21 @@ import "core:strings"
 import "core:os"
 import "core:time"
 import "core:fmt"
+import "core:log"
 
 import "lib:postgres"
 
-import "maglev:assets"
-import "maglev:html"
-import "maglev:session"
-import db "maglev:database"
+import "lib:maglev/base"
+import "lib:maglev/assets"
+import "lib:maglev/html"
+import "lib:maglev/session"
+import db "lib:maglev/database"
 
-import partials "../partials"
+import "../../app/events"
 
-@export
 `
 	INIT2 :: " :: proc("
-	INIT3 :: ") -> string {\n\tusing html\n\tb := strings.builder_make(allocator = context.temp_allocator)\n\n"
+	INIT3 :: ") -> (_result: string, _ok: bool) #optional_ok {\n\tusing html\n\tb := strings.builder_make(allocator = context.temp_allocator)\n\n"
 
 	TEXT_PREFIX :: "\tstrings.write_string(&b,`"
 	TEXT_SUFFIX :: "`)\n"
@@ -60,7 +61,7 @@ import partials "../partials"
 		switch c {
 		case '<':
 			if state == .Outside {
-				state = .Going_In_1;
+				state = .Going_In_1
 			} else {
 				strings.write_byte(&buf, '<')
 			}
@@ -153,7 +154,7 @@ import partials "../partials"
 		os.write(result, buf.buf[:])
 		os.write_string(result, TEXT_SUFFIX)
 	}
-	os.write_string(result, "\n\treturn strings.to_string(b)\n}\n")
+	os.write_string(result, "\n\treturn strings.to_string(b), true\n}\n")
 
 	return true
 }

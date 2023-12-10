@@ -1,6 +1,7 @@
 package database
 
 import "core:log"
+import "core:strings"
 
 import http "lib:odin-http"
 import "lib:postgres"
@@ -23,10 +24,11 @@ setup :: proc(conn_info: DBInfo) {
 	info.set = true
 }
 
-check_connection :: proc() -> (success: bool) {
+ensure_connection :: proc() -> (valid: bool) {
 	if conn != nil do return true
 
-	conn = postgres.connectdb("dbname=oweb user=oweb password=oweb")
+
+	conn = postgres.connectdb(strings.clone_to_cstring("dbname=oweb user=oweb password=oweb"))
 	if conn == nil {
 		log.error("Could not connect to database!")
 		return false
@@ -42,8 +44,7 @@ check_connection :: proc() -> (success: bool) {
 }
 
 handler :: proc(handler: ^http.Handler, req: ^http.Request, res: ^http.Response) {
-	if check_connection() {
-		next := handler.next.(^http.Handler)
-		next.handle(next, req, res)
-	}
+	if valid := ensure_connection(); !valid do return
+	next := handler.next.(^http.Handler)
+	next.handle(next, req, res)
 }

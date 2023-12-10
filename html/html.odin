@@ -4,15 +4,15 @@ import "core:os"
 import "core:strings"
 
 Builder :: struct {
-	contents: [dynamic]string
+	contents: [dynamic]string,
 }
 
 builder_start :: proc(builder: ^Builder) {
-	builder.contents = make([dynamic]string, 0, 6);
+	builder.contents = make([dynamic]string, 0, 6)
 }
 
 builder_done :: proc(builder: ^Builder) -> string {
-	return strings.concatenate(builder.contents[:], context.temp_allocator);
+	return strings.concatenate(builder.contents[:], context.temp_allocator)
 }
 
 link_to :: proc(builder: ^Builder, inner: string, link: string) {

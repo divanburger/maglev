@@ -1,12 +1,8 @@
 package assets
 
-import "core:crypto/sha3"
 import "core:path/filepath"
-import "core:path/slashpath"
-import "core:encoding/hex"
 import "core:strings"
 import "core:log"
-import "core:os"
 
 import http "lib:odin-http"
 
@@ -78,10 +74,19 @@ handler :: proc(req: ^http.Request, r: ^http.Response) {
 		}
 	}
 
-	r.headers["cache-control"] = "public, max-age=31556952, immutable"
+	http.headers_set(&r.headers, "cache-control", "public, max-age=31556952, immutable")
 	{
-		allow_origin, allow_origin_ok := cdn_allow_origin.?
-		if allow_origin_ok do r.headers["access-control-allow-origin"] = allow_origin
+		origin, has_origin := http.headers_get(req.headers, "origin")
+		log.info("Origin:", origin)
+		if has_origin {
+			for allowed_origin in cdn_allow_origin {
+				log.info("Allowed origin:", allowed_origin)
+				if allowed_origin == origin {
+					log.info("Chosen origin:", allowed_origin)
+					http.headers_set(&r.headers, "access-control-allow-origin", allowed_origin)
+				}
+			}
+		}
 	}
 	http.respond_file(r, asset.file_path)
 }
