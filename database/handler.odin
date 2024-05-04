@@ -4,7 +4,7 @@ import "core:log"
 import "core:strings"
 
 import http "lib:odin-http"
-import "lib:postgres"
+import postgres "lib:odin-postgresql"
 
 DBInfo :: struct {
 	user_name: string,
@@ -17,7 +17,7 @@ DBInfo :: struct {
 info: DBInfo
 
 @thread_local
-conn: ^postgres.Conn
+conn: postgres.Conn
 
 setup :: proc(conn_info: DBInfo) {
 	info = info
@@ -34,8 +34,8 @@ ensure_connection :: proc() -> (valid: bool) {
 		return false
 	}
 
-	if status := postgres.status(conn); status != postgres.ConnStatusType.OK {
-		log.error("Error connecting to database!", postgres.errorMessage(conn))
+	if status := postgres.status(conn); status != postgres.Connection_Status.Ok {
+		log.error("Error connecting to database!", postgres.error_message(conn))
 		return false
 	}
 

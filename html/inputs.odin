@@ -6,6 +6,10 @@ import "core:time"
 
 import "../base"
 
+hidden_input :: proc(name: string, value: base.Value, data: []KeyValue = {}) -> string {
+	return strings.concatenate([]string{"<input type=\"hidden\" name=\"", name, "\" ", attrs({{"value", value}}), attrs(data, "data-"), "/>"})
+}
+
 text_input :: proc(name: string, value: Maybe(string) = nil, placeholder: Maybe(string) = nil, class: []string = {}, data: []KeyValue = {}, autofocus: bool = false) -> string {
 	return strings.concatenate([]string{"<input type=\"text\" name=\"", name, "\" ", attrs({{"value", base.value_from(value)}, {"placeholder", base.value_from(placeholder)}, {"class", strings.join(class, " ")}, {"autofocus", autofocus}}), attrs(data, "data-"), "/>"})
 }

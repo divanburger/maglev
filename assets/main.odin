@@ -1,6 +1,6 @@
 package assets
 
-import "core:crypto/sha3"
+import "core:crypto/hash"
 import "core:path/filepath"
 import "core:path/slashpath"
 import "core:encoding/hex"
@@ -51,7 +51,11 @@ lookup_by_root :: proc(root: ^AssetRoot, name: string) -> (asset: ^Asset, ok: bo
 	}
 	defer os.close(file)
 
-	hash_bytes := sha3.hash_224(file) or_return
+	hash_bytes, hash_err := hash.hash(.SHA224, file)
+	if hash_err != .None {
+		log.error("Error reading asset: ", hash_err)
+		return nil, false
+	}
 
 	digest := string(hex.encode(hash_bytes[:8]))
 
@@ -63,7 +67,7 @@ lookup_by_root :: proc(root: ^AssetRoot, name: string) -> (asset: ^Asset, ok: bo
 		base, cdn_base_ok := cdn_url_base.?
 		if cdn_base_ok do url = strings.concatenate([]string{base, url})
 	}
-	// log.info("Asset add:", url)
+	log.info("Asset add:", url)
 
 	ok = true
 	asset = new_clone(Asset{ url = url, file_path = file_path, name = name, digest = digest })

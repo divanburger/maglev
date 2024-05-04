@@ -1,6 +1,6 @@
 package session
 
-import "core:crypto/sha3"
+import "core:crypto/hash"
 import "core:math/rand"
 import "core:encoding/base64"
 import "core:time"
@@ -30,7 +30,7 @@ state: SessionState
 
 generate_key :: proc() -> string {
 	bytes := transmute([8]u8)rand.uint64()
-	hashed_bytes := sha3.hash_bytes_256(bytes[:])
+	hashed_bytes := hash.hash(.SHA256, bytes[:])
 	return base64.encode(hashed_bytes[:])
 }
 

@@ -28,6 +28,7 @@ Add_Column :: struct {
 	primary: bool,
 	unique: bool,
 	array: bool,
+	optional: bool,
 }
 
 Set_Default :: struct {
@@ -111,8 +112,8 @@ change_table :: proc(name: string) -> (creating: bool) {
     return change_table_begin(name)
 }
 
-add_column :: proc(table_name: string, name: string, type: db.Database_Value_Type, default: Maybe(string) = nil, primary := false, unique := false, index := false, sequence := false, array := false) {
-	append(&migration_state.migration.actions, Add_Column{table_name, name, type, default, primary, unique, array})
+add_column :: proc(table_name: string, name: string, type: db.Database_Value_Type, default: Maybe(string) = nil, primary := false, unique := false, index := false, sequence := false, array := false, optional := false) {
+	append(&migration_state.migration.actions, Add_Column{table_name, name, type, default, primary, unique, array, optional})
 	if !migration_state.rollback {
 		if index && !unique {
 			add_index(table_name, name)
@@ -124,10 +125,10 @@ add_column :: proc(table_name: string, name: string, type: db.Database_Value_Typ
 	}
 }
 
-column :: proc(name: string, type: db.Database_Value_Type, default: Maybe(string) = nil, primary := false, unique := false, index:= false, sequence := false, array := false) {
+column :: proc(name: string, type: db.Database_Value_Type, default: Maybe(string) = nil, primary := false, unique := false, index:= false, sequence := false, array := false, optional := false) {
 	table_name, ok := migration_state.table_name.(string)
 	if !ok do panic("Must be called within a create_table call")
-	add_column(table_name, name, type, default, primary, unique, index, sequence, array)
+	add_column(table_name, name, type, default, primary, unique, index, sequence, array, optional)
 }
 
 add_index_multi :: proc(table_name: string, columns: []string, unique : = false, name: Maybe(string) = nil) {
